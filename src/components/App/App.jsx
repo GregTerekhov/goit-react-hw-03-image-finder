@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import { Modal } from 'components/Modal/Modal';
 import { Searchbar } from 'components/Searchbar/Searchbar';
 import { Button } from 'components/Button/Button';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
+import { Loader } from 'components/Loader/Loader';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { AppContainer, ModalImage } from './App.styled';
 
 const BASE_URL = 'https://pixabay.com/api/';
@@ -19,67 +22,66 @@ export class App extends Component {
     hits: [],
     loading: false,
     hasMore: true,
+    totalHits: 0,
   };
 
-  // componentDidMount() {
-  //   if (this.state.searchQuery !== '') {
-  //     this.fetchImages();
-  //   }
-  // }
-
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(_, prevState) {
     const { searchQuery, page } = this.state;
+
     if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
-      this.fetchImages();
+      const params = new URLSearchParams({
+        key: API_KEY,
+        q: searchQuery,
+        image_type: 'photo',
+        orientation: 'horizontal',
+        safesearch: true,
+        per_page: 12,
+        page: page,
+      });
+
+      this.setState({ loading: true });
+      axios
+        .get(BASE_URL, { params })
+        .then(response => {
+          const newHits = response.data.hits;
+          const totalHits = response.data.totalHits;
+          this.setState(prevState => ({
+            hits: [...prevState.hits, ...newHits],
+            hasMore: newHits.length > 0,
+            totalHits: totalHits,
+          }));
+          if (
+            (prevState.hits.length === 0 && newHits.length === totalHits) ||
+            (prevState.hits.length !== 0 && newHits.length < 12)
+          ) {
+            toast.info('No more images', {
+              position: 'top-right',
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              theme: 'colored',
+            });
+            this.setState({ hasMore: false });
+          }
+        })
+
+        .catch(error => {
+          console.error(error.response);
+        })
+        .finally(() => {
+          this.setState({ loading: false });
+        });
     }
   }
-
-  fetchImages = () => {
-    const { searchQuery, page } = this.state;
-    const params = new URLSearchParams({
-      key: API_KEY,
-      q: searchQuery,
-      image_type: 'photo',
-      orientation: 'horizontal',
-      safesearch: true,
-      per_page: 12,
-      page: page,
-    });
-
-    this.setState({ loading: true });
-    axios
-      .get(BASE_URL, { params })
-      .then(response => {
-        const newHits = response.data.hits;
-        this.setState(prevState => ({
-          hits: [...prevState.hits, ...newHits],
-          loading: false,
-          hasMore: newHits.length > 0,
-        }));
-
-        // eslint-disable-next-line no-undef
-        if (newHits.length === 0 && prevState.hits.length !== 0) {
-          alert('No more images');
-        }
-      })
-
-      .catch(error => {
-        console.error(error.response);
-      })
-      .finally(() => {
-        this.setState({ loading: false });
-      });
-  };
 
   handleSearchFormSubmit = searchValue => {
     this.setState({ searchQuery: searchValue, page: 1, hits: [] });
   };
 
   handleLoadMore = () => {
-    this.setState(
-      prevState => ({ page: prevState.page + 1, loading: true }),
-      this.fetchImages()
-    );
+    this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
   handleImageClick = largeImageURL => {
@@ -88,12 +90,6 @@ export class App extends Component {
 
   toggleModal = () => {
     const { showModal } = this.state;
-
-    // if (!showModal) {
-    //   document.body.style.overflow = 'hidden';
-    // } else {
-    //   document.body.style.overflow = 'auto';
-    // }
     this.setState({ showModal: !showModal });
   };
 
@@ -114,11 +110,11 @@ export class App extends Component {
             handleImageClick={this.handleImageClick}
           />
         )}
-        {loading && <h1>Loading...</h1>}
+        {loading && <Loader />}
         {showLoadMoreBtn && (
           <Button onClick={this.handleLoadMore} disabled={loading} />
         )}
-        <ToastContainer autoClose={3000} />
+        <ToastContainer />
       </AppContainer>
     );
   }

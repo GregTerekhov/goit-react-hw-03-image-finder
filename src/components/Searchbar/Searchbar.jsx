@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { FiSearch } from 'react-icons/fi';
 import {
@@ -10,6 +11,10 @@ import {
 } from './Searchbar.styled';
 
 export class Searchbar extends Component {
+  static propTypes = {
+    onSearchSubmit: PropTypes.func.isRequired,
+  };
+
   state = {
     searchValue: '',
   };
@@ -24,7 +29,15 @@ export class Searchbar extends Component {
     event.preventDefault();
 
     if (this.state.searchValue.trim() === '') {
-      toast.error('Enter a valid query');
+      toast.error('Enter a valid query', {
+        position: 'top-right',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+      });
       return;
     }
     this.props.onSearchSubmit(this.state.searchValue);
