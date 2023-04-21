@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { FiSearch } from 'react-icons/fi';
+import { toastConfig } from 'services/utils';
 import {
   Header,
   SearchForm,
@@ -29,15 +30,7 @@ export class Searchbar extends Component {
     event.preventDefault();
 
     if (this.state.searchValue.trim() === '') {
-      toast.error('Enter a valid query', {
-        position: 'top-right',
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'colored',
-      });
+      toast.error('Enter a valid query', toastConfig);
       return;
     }
     this.props.onSearchSubmit(this.state.searchValue);
