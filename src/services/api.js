@@ -15,7 +15,6 @@ export const getImages = async (searchQuery, page) => {
     page: page,
   };
 
-  const response = axios.get('/', { params });
-
+  const response = await axios.get('/', { params });
   return response.data;
 };

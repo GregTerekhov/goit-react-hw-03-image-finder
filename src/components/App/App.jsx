@@ -27,6 +27,10 @@ export class App extends Component {
       this.setState({ loading: true });
       getImages(searchQuery, page)
         .then(({ hits: newHits, totalHits }) => {
+          if (this.state.searchQuery.trim() === '' || totalHits === 0) {
+            toast.error('Enter a valid query', toastConfig);
+            return;
+          }
           if (
             (prevState.hits.length === 0 && newHits.length === totalHits) ||
             (prevState.hits.length !== 0 && newHits.length < 12)
